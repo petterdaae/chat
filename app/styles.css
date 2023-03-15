@@ -1,0 +1,41 @@
+#wrapper {
+  display: flex;
+  flex-direction: column;
+  font-family: "Lucida Grande";
+}
+
+ul {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  /* reset list style */
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+li {
+  width: 900px;
+  padding: 8px;
+  margin: 4px;
+}
+
+li:not(:last-of-type) {
+  border-bottom: 2px solid lightgray;
+}
+
+form {
+  display: flex;
+  justify-content: center;
+}
+
+input {
+  padding: 8px;
+  margin: 4px;
+}
+
+button {
+  padding: 8px;
+  margin: 4px;
+}

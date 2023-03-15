@@ -1,9 +1,14 @@
 import type { ActionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { Form, useActionData } from "@remix-run/react";
-import { useMemo, useState } from "react";
+import { Form, useActionData, useNavigation } from "@remix-run/react";
+import { useEffect, useMemo, useState } from "react";
 import type { Message } from "~/chatgpt";
 import { chat } from "~/chatgpt";
+import styles from "../styles.css";
+
+export function links() {
+  return [{ rel: "stylesheet", href: styles }];
+}
 
 export async function action({ request }: ActionArgs) {
   const formData = await request.formData();
@@ -20,17 +25,28 @@ export async function action({ request }: ActionArgs) {
 }
 
 export default function Index() {
+  const [newMessage, setNewMessage] = useState("");
   const messageHistory = useActionData<typeof action>();
   const stringifiedMessageHistory = useMemo(
     () => JSON.stringify(messageHistory),
     [messageHistory]
   );
-  const [newMessage, setNewMessage] = useState("");
+
+  const navigation = useNavigation();
+  const loading = navigation.state !== "idle";
+  useEffect(() => {
+    if (navigation.state === "submitting") {
+      setNewMessage("");
+    }
+  }, [navigation.state]);
+
   return (
     <div>
-      {messageHistory?.map((message, index) => (
-        <div key={index}>{message.content}</div>
-      ))}
+      <ul>
+        {messageHistory?.map((message, index) => (
+          <li key={index}>{message.content}</li>
+        ))}
+      </ul>
       <Form method="post">
         <input
           type="hidden"
@@ -42,8 +58,11 @@ export default function Index() {
           name="newMessage"
           onChange={(e) => setNewMessage(e.target.value)}
           value={newMessage}
+          disabled={loading}
         />
-        <button type="submit">Submit</button>
+        <button type="submit" disabled={loading}>
+          Send
+        </button>
       </Form>
     </div>
   );
