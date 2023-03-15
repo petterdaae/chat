@@ -1,7 +1,7 @@
 import type { ActionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Form, useActionData, useNavigation } from "@remix-run/react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { Message } from "~/chatgpt";
 import { chat } from "~/chatgpt";
 import styles from "../styles.css";
@@ -13,32 +13,25 @@ export function links() {
 export async function action({ request }: ActionArgs) {
   const formData = await request.formData();
   const stringifiedMessageHistory = formData.get("messageHistory") as string;
-  let messageHistory: Message[] =
-    stringifiedMessageHistory === ""
-      ? []
-      : JSON.parse(stringifiedMessageHistory);
+  const messageHistory: Message[] = JSON.parse(stringifiedMessageHistory);
   const newMessage = formData.get("newMessage") as string;
-  messageHistory = [...messageHistory, { role: "user", content: newMessage }];
-  const answer = await chat(messageHistory);
-  messageHistory = [...messageHistory, answer];
-  return json(messageHistory);
+  const messageHistoryWithNewMessage: Message[] = [
+    ...messageHistory,
+    { role: "user", content: newMessage },
+  ];
+  const answer = await chat(messageHistoryWithNewMessage);
+  return json([...messageHistoryWithNewMessage, answer]);
 }
 
 export default function Index() {
-  const [newMessage, setNewMessage] = useState("");
   const messageHistory = useActionData<typeof action>();
   const stringifiedMessageHistory = useMemo(
-    () => JSON.stringify(messageHistory),
+    () => JSON.stringify(messageHistory ?? []),
     [messageHistory]
   );
 
   const navigation = useNavigation();
   const loading = navigation.state !== "idle";
-  useEffect(() => {
-    if (navigation.state === "submitting") {
-      setNewMessage("");
-    }
-  }, [navigation.state]);
 
   return (
     <div>
@@ -53,13 +46,7 @@ export default function Index() {
           name="messageHistory"
           value={stringifiedMessageHistory}
         />
-        <input
-          type="text"
-          name="newMessage"
-          onChange={(e) => setNewMessage(e.target.value)}
-          value={newMessage}
-          disabled={loading}
-        />
+        <input type="text" name="newMessage" disabled={loading} />
         <button type="submit" disabled={loading}>
           Send
         </button>
